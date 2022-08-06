@@ -156,7 +156,7 @@ public:
 				delta_T = T;
 				v0[0] = -v[0]*error;
 				v0[1] = v[1]*error;
-				pos0[0] = columns[i] - WIDTHC/2 - r;
+				pos0[0] = columns[i] - WIDTHC/2 - r - 1;
 				pos0[1] = pos[1];
 			}
 
@@ -166,8 +166,8 @@ public:
 				delta_T = T;
 				v0[0] = -v[0]*error;
 				v0[1] = v[1]*error;
-				pos0[0] = columns[i] + WIDTHC/2 + r;
-				pos0[1] = pos[1];
+				pos0[0] = columns[i] + WIDTHC/2 + r + 1;
+				pos0[1] = pos[1]; 
 			}
 		}
 	}

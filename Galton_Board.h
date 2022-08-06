@@ -6,6 +6,7 @@
 
 #include "Config.h"
 #include "Ball.h"
+#include "QuadTree.h"
 using namespace std;
 
 
@@ -31,6 +32,8 @@ private:
 	SDL_Rect destRect, srcRect;
 	vector <thread> THREADS;
 	Uint32 frameStart, frameTime;
+
+	QuadTree *qtree; 
 	
 	void createMap()
 	{
@@ -109,6 +112,17 @@ private:
 		}
 	}
 
+	void runQuadTree()
+	{
+		while(RUN)
+		{
+			qtree -> run();
+			qtree -> freeOverflow();
+			qtree -> checkDeadEnd();
+			SDL_Delay(1000/((float)FPS+100));
+		}
+	}
+
 	void runBall(Ball *ball)
 	{
 		while (RUN && !ball-> is_stability )
@@ -134,7 +148,7 @@ private:
 	{
 		while (RUN && !ball-> is_stability)
 		{
-			ball -> collide_ball(T, BALLS);
+			ball -> collide_ball(T,qtree-> query(ball));
 			SDL_Delay(1000/((float)FPS+100));
 		}
 
@@ -144,7 +158,6 @@ private:
 	{
 		while (RUN && !ball-> is_stability)
 		{
-			// cout << "check " << endl;
 			ball -> collide_columns(T, COLUMN);
 			SDL_Delay(1000/((float)FPS+100));
 		}
@@ -159,6 +172,7 @@ private:
 		}
 	}
 
+	
 
 	void drawBackGround()
 	{
@@ -191,9 +205,11 @@ private:
 
 	void appendBall(int x, int y)
 	{
-		float pos[2] = {x,y};
+		float pos[2] = {(float) x,(float)y};
 		Ball* ball = new Ball(pos, BALL_R, T);
 		BALLS.push_back(ball);
+		qtree -> add(ball);
+
 		THREADS.push_back(thread(runBall,this ,ball));
 		THREADS.push_back(thread(runCollide, this,ball));
 		THREADS.push_back(thread(runCollideBall, this,ball));
@@ -217,7 +233,11 @@ public:
 		texMap = SDL_CreateTextureFromSurface(renderer,IMG_Load(PTH_POINT));
 		texBackGround = SDL_CreateTextureFromSurface(renderer, IMG_Load(PTH_BACKGROUND));
 
+		qtree = new QuadTree(new Rectangle(0,0,WIDTH, HEIGHT),30);
+
 		THREADS.push_back(thread(&GaltonBoard::runTime, this));
+		THREADS.push_back(thread(&GaltonBoard::runQuadTree, this));
+
 	}
 
 	void loop()
@@ -260,9 +280,16 @@ public:
 
 	void clean()
 	{
+		SDL_DestroyTexture(texMap);
+		SDL_DestroyTexture(texBall);
+		SDL_DestroyTexture(texBackGround);
 		SDL_DestroyWindow(window);
 		SDL_DestroyRenderer(renderer);
 		SDL_Quit();
+		for (auto i:BALLS)
+			delete i;
+		delete qtree;
+
 	}
 
 };
